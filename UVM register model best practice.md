@@ -286,9 +286,9 @@ endclass
 1. 声明predictor时，使用总线的sequence_item（transaction）作为类的指定参数
 2. 在build_phase中创建predictor
 3. 在connect_phase中完成以下操作：
-    1. 将predictor的map组件设置为register model的map
-    2. 将predictor的adapter设为总线的adapter
-    3. 将predictor的analysis export连接到总线agent的analysis port上
+    a. 将predictor的map组件设置为register model的map
+    b. 将predictor的adapter设为总线的adapter
+    c. 将predictor的analysis export连接到总线agent的analysis port上
 
 ```verilog
 class my_env extends uvm_env;
