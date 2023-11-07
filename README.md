@@ -44,7 +44,7 @@ UVM寄存器模型的出现弥补了上述缺陷，使用寄存器模型内置�
 - Type：类型，指明当前这一行描述的是寄存器（register）还是存储器（memory）。只支持填入“***reg***”和“***mem***”
 - OffsetAddress：偏移地址，指明寄存器或存储器在当前模块内的偏移，生成寄存器模型时会影响地址映射。地址以“***0x***”开头，十六进制，大小写不敏感
 - RegName：寄存器名，指明当前寄存器（或存储器）的名字，需要跟RTL代码中对应寄存器（存储器）名字**保持一致**，**大小写敏感**
-- Width：位宽，指明寄存器的宽度。如果当前是寄存器数组或存储器，则需要使用*”***位宽*长度***”*的方式表示
+- Width：位宽，指明寄存器的宽度。如果当前是寄存器数组或存储器，则需要使用”**位宽\*长度**”的方式表示
 - Bits：比特数，指明当前位域占用寄存器的第几比特到第几比特，格式为“**[*start_bit:end_bit*]**”。如果只有一位也可以写成“**[*start_bit*]**”
 - fieldName：位域名，指明当前位域的名字。如果当前是保留位域，固定填“***reserved***”。如果当前行是存储器，则可以填“NA”或不填
 - Access：访问类型，指明当前位域（或存储器）的访问类型。对于普通寄存器位域支持以下类型“***rw|ro|wo|w1|w1c|rc|rs|wrc|wrs|wc|ws|wsrc|wcrs|w1s|w1t|w0c|w0s|...***“，完整访问类型信息见附录1。对于存储器类型只支持两种访问类型，”***rw***“和”***ro***“，分别对应于RAM和ROM
@@ -198,7 +198,7 @@ UVM寄存器模型不仅能提供寄存器访问方法，也能持续追踪DUT�
 
 ![自动预测](img/自动预测.png)
 
-自动预测**依赖于**寄存器模型驱动总线sequence，只有在总线sequence执行时才能更新寄存器模型。如果其他非总线sequence通过目标总线sequencer的传输完成了寄存器的更新，又或者直接通过DUT interface更新寄存器，都无法通过自动预测更新寄存器模型。UVM寄存器模型默认使用显式预测（Explicit Prediction），如果想使用自动预测，需要调用***set_auto_predict()***函数。
+自动预测**依赖于**寄存器模型驱动总线sequence，只有在总线sequence执行时才能更新寄存器模型。如果其他非总线sequence通过目标总线sequencer的传输完成了寄存器的更新，又或者直接通过DUT interface更新寄存器，都无法通过自动预测更新寄存器模型。UVM寄存器模型默认使用显式预测（Explicit Prediction），如果想使用自动预测，需要调用 ***set_auto_predict()*** 函数。
 
 ```verilog
 class my_test extends uvm_test;
@@ -209,7 +209,7 @@ class my_test extends uvm_test;
 		...
 		rm = reg_model::type_id::create("my_reg_model");
 		rm.build();
-		***rm.map.set_auto_predict();***
+		rm.map.set_auto_predict();
 		...
 	endfunction
 endclass
@@ -231,7 +231,7 @@ endclass
 
 **Step1: 寄存器模型例化和传递**
 
-在使用寄存器模型时倾向于**顶层传递**的方式，即在test层例化寄存器模型后，再通过***uvm_config_db***传给下层模块。这种方法有利于验证环境env的闭合性（我的理解是，将bus agent和register model隔离开，如果某条testcase需要对reg model做不同的配置，那么可以在test层中完成配置，不用修改env的代码）。例化后我们需要**手动调用**寄存器模型的***build()***函数，因为uvm_reg_block继承自uvm_object，不支持phase机制，所以其预定义的build()函数不会自动执行。
+在使用寄存器模型时倾向于**顶层传递**的方式，即在test层例化寄存器模型后，再通过***uvm_config_db***传给下层模块。这种方法有利于验证环境env的闭合性（我的理解是，将bus agent和register model隔离开，如果某条testcase需要对reg model做不同的配置，那么可以在test层中完成配置，不用修改env的代码）。例化后我们需要**手动调用**寄存器模型的 ***build()*** 函数，因为uvm_reg_block继承自uvm_object，不支持phase机制，所以其预定义的build()函数不会自动执行。
 
 ```verilog
 class my_test extends uvm_test;
@@ -240,11 +240,11 @@ class my_test extends uvm_test;
 	...
 	function void build_phase(uvm_phase phase);
 		...
-    ***uvm_reg::include_coverage("*", UVM_CVR_ALL);***
-		***rm = reg_model::type_id::create("my_reg_model");*
-		*rm.build();***
+                uvm_reg::include_coverage("*", UVM_CVR_ALL);
+		rm = reg_model::type_id::create("my_reg_model");
+		rm.build();
 		...
-		***uvm_config_db#(reg_model)::set(this, "", "rm", rm);***
+		uvm_config_db#(reg_model)::set(this, "", "rm", rm);
 	endfunction
 endclass
 
@@ -254,7 +254,7 @@ class my_env extends uvm_env;
 	...
 	function void build_phase(uvm_phase phase);
 		...
-		if (!***uvm_config_db#(reg_model)::get(this, "", "rm", rm)***) begin
+		if (!uvm_config_db#(reg_model)::get(this, "", "rm", rm)) begin
 			...
 		end
 	endfunction
@@ -274,7 +274,7 @@ class my_env extends uvm_env;
 	...
 	function void connect_phase(uvm_phase phase);
 		...
-		***rm.map.set_sequencer(bus_agt.sequencer, adapter);***
+		rm.map.set_sequencer(bus_agt.sequencer, adapter);
 	endfunction
 endclass
 ```
@@ -293,19 +293,19 @@ endclass
 ```verilog
 class my_env extends uvm_env;
 	...
-	***uvm_reg_predictor #(bus_seq_item) predictor;***
+	uvm_reg_predictor #(bus_seq_item) predictor;
 	...
 	function void build_phase(uvm_phase phase);
 		...
-		***predictor = uvm_reg_predictor #(bus_seq_item)::type_id::create("predictor", this);***
+		predictor = uvm_reg_predictor #(bus_seq_item)::type_id::create("predictor", this);
 		...
 	end
 
 	function void connect_phase(uvm_phase phase);
 		...
-		***predictor.map = rm.map;***
-		***predictor.adapter = adapter;***
-		***bus_agt.ap.connect(predictor.bus_in);***
+		predictor.map = rm.map;
+		predictor.adapter = adapter;
+		bus_agt.ap.connect(predictor.bus_in);
 		...
 	endfunction
 endclass
@@ -313,17 +313,17 @@ endclass
 
 **Step 4: 配置寄存器模型对象**
 
-根据不同项目的需求，通常会对实例化出来的寄存器模型句柄进行不同的配置，如：配置后门访问的路径，初始复位寄存器模型等等。下面介绍一些常用的寄存器模型配置函数，**带红色星号的函数是必须调用的函数**。以下操作都在test层的build_phase中执行。
+根据不同项目的需求，通常会对实例化出来的寄存器模型句柄进行不同的配置，如：配置后门访问的路径，初始复位寄存器模型等等。下面介绍一些常用的寄存器模型配置函数，**带星号的函数是必须调用的函数**。以下操作都在test层的build_phase中执行。
 
-1. configure(parent, hdl_path)*****
+1. configure(parent, hdl_path)*
     
     configure()函数可以配置寄存器模型后门访问的路径，如果当前寄存器模型是最顶层的uvm_reg_block，parent参数填null即可
     
-2. lock_model()*****
+2. lock_model()*
     
     寄存器模型在使用前必须要调用lock_model()，因为lock_model()会完成地址的映射，同时不允许寄存器模型再进行修改，如添加register和memory等
     
-3. reset()*****
+3. reset()*
     
     复位寄存器模型中所有寄存器的值。如果不调用此函数，寄存器模型中所有寄存器的值都是0；调用此函数后，所有寄存器的值都将变为设置的复位值
     
@@ -339,11 +339,11 @@ class my_test extends uvm_test;
 	...
 	function void build_phase(uvm_phase phase);
 		...
-		***rm.configure(null, "top.dut");***
+		rm.configure(null, "top.dut");
 		rm.build();
-		***rm.lock_model();***
-		***rm.reset();
-    rm.set_coverage(UVM_CVR_ALL);***
+		rm.lock_model();
+		rm.reset();
+                rm.set_coverage(UVM_CVR_ALL);
 		...
 	endfunction
 endclas
@@ -351,7 +351,7 @@ endclas
 
 **注意事项：**
 
-1. ralgen生成的寄存器模型中使用了build_coverage()函数，为了避免仿真时大量打印下面的提示信息，创建寄存器模型之前要加上***uvm_reg::include_coverage("*", UVM_CVR_ALL);***
+1. ralgen生成的寄存器模型中使用了build_coverage()函数，为了避免仿真时大量打印下面的提示信息，创建寄存器模型之前要加上***uvm_reg::include_coverage("\*", UVM_CVR_ALL);***
     
     ```bash
     include_coverage not located
@@ -364,7 +364,7 @@ endclas
     UVM_WARNING xxx reporter [RegModel] Individual xxx field access not available for field 'xxx'. Access complete register instead.
     ```
     
-    在编译时加入***+define+UVM_REG_NO_INDIVIDUAL_FIELD_ACCESS***可以去掉warning
+    在编译时加入 ***+define+UVM_REG_NO_INDIVIDUAL_FIELD_ACCESS*** 可以去掉warning
     
 
 ## 3.2 UVM寄存器访问方法
@@ -400,9 +400,9 @@ class my_driver extends uvm_driver;
   ...
   reg_model rm;
   ...
-  ***uvm_status_e status;***
-  ***uvm_reg_data_t data;***
-  ***rm.CTRL_REG.read(status, data, UVM_FRONTDOOR);***
+  uvm_status_e status;
+  uvm_reg_data_t data;
+  rm.CTRL_REG.read(status, data, UVM_FRONTDOOR);
   ...
 endclass
 ```
@@ -420,11 +420,11 @@ read和write任务不仅可以用于前门访问，也可以用于后门访问�
     virtual task peek(
       output uvm_status_e      status,
       output uvm_reg_data_t    value,
-       input string            kind      = "",
-       input uvm_sequence_base parent    = null,
-       input uvm_object        extension = null,
-       input string            fname     = "",
-       input int               lineno    = 0
+      input  string            kind      = "",
+      input  uvm_sequence_base parent    = null,
+      input  uvm_object        extension = null,
+      input  string            fname     = "",
+      input  int               lineno    = 0
     )
     ```
     
@@ -438,10 +438,10 @@ class my_driver extends uvm_driver;
   ...
   uvm_status_e status;
   uvm_reg_data_t data;
-  ***rm.CTRL_REG.write(status, 'h22, UVM_BACKDOOR);
+  rm.CTRL_REG.write(status, 'h22, UVM_BACKDOOR);
   rm.CTRL_REG.read(status, data, UVM_FRONTDOOR);
   rm.CTRL_REG.write(status, 'h11, UVM_FRONTDOOR);
-	rm.CTRL_REG.peek(status, data);***
+  rm.CTRL_REG.peek(status, data);
   ...
 endclass
 ```
@@ -476,10 +476,10 @@ UVM寄存器模型不仅能提供寄存器访问方法，还能追踪DUT寄存�
     
     ![mirror.svg](img/mirror.svg)
     
-- randomize：调用randomize之后，目标寄存器的期望值将会变成随机数值，镜像值不会改变。注意使用ralgen生成寄存器模型时要带上***-all_fields_rand***选项
+- randomize：调用randomize之后，目标寄存器的期望值将会变成随机数值，镜像值不会改变。注意使用ralgen生成寄存器模型时要带上 ***-all_fields_rand*** 选项
     
     ```bash
-    ralgen -t temp -I . -uvm ***-all_fields_rand*** ral_temp.ralf
+    ralgen -t temp -I . -uvm -all_fields_rand ral_temp.ralf
     ```
     
 
@@ -556,7 +556,7 @@ ralgen -h
 应用示例：
 
 ```bash
-ralgen -t temp -I . -uvm ***-c b*** ral_temp.ralf
+ralgen -t temp -I . -uvm -c b ral_temp.ralf
 ```
 
 ralgen会在每个寄存器class内部定义covergroup，并在new函数中完成例化。同时重写uvm_reg的sample函数，使其调用对应寄存器covergroup的sample函数。这样每次调用寄存器对象的read/write函数时都会收集覆盖率信息。
@@ -591,11 +591,11 @@ class my_test extends uvm_test;
 	...
 	function void build_phase(uvm_phase phase);
 		...
-    ***uvm_reg::include_coverage("*", UVM_CVR_ALL);***
+                uvm_reg::include_coverage("*", UVM_CVR_ALL); 
 		rm = reg_model::type_id::create("my_reg_model");
 		rm.build();
 		...
-    ***rm.set_coverage(UVM_CVR_ALL);***
+                rm.set_coverage(UVM_CVR_ALL);
 	endfunction
 endclass
 ```
@@ -640,23 +640,16 @@ ralgen脚本可选选项
 
 | 选项 | 说明 |
 | --- | --- |
-| -all_fields_rand | Allows you to configure all the writable fields as rand
-(is_rand_bit is set to 1) without requiring the constraint
-block to be specified. The generated code only marks fields, which 
-have constraints defined with them as rand by default. |
+| -all_fields_rand | Allows you to configure all the writable fields as rand (is_rand_bit is set to 1) without requiring the constraint block to be specified. The generated code only marks fields, which have constraints defined with them as rand by default. |
 | -b | Generates the back-door access code for those registers and memories where a complete hdl_path is specified. |
 | -B, gen_byte_addr | Generates RAL model with byte-level address granularity. |
 | -c a | Generates the “Address Map” functional coverage model. You may specify the -c option multiple times. |
 | -c b | Generate the “Register Bits” functional coverage model. You may specify the -c option multiple times. |
 | -c f | Generates the “Field Values” functional coverage model. You may specify the -c option multiple times. |
-| -c s | Generates separate bins for read-only bits to read both 1 and 0 for read-only registers for ralgen-generated bit-level coverage.
-Specifying the -c b option alongside the -c s option results in an error. |
+| -c s | Generates separate bins for read-only bits to read both 1 and 0 for read-only registers for ralgen-generated bit-level coverage. Specifying the -c b option alongside the -c s option results in an error. |
 | -e | Generates empty constraint blocks for every abstract class. |
 | -f <filename> | Specifies all ralgen options within a file. |
-| -flds_out_reg all | none | no_uniq | Controls the field handle generation in blocks.
-all - Generates all field handles in blocks (same as not providing -flds_all_reg).
-none - Generates no field handles in blocks.
-no_uniq - Generates no field handles for uniquely named fields in blocks. |
+| -flds_out_reg all \| none \| no_uniq | Controls the field handle generation in blocks. all - Generates all field handles in blocks (same as not providing -flds_all_reg). none - Generates no field handles in blocks. no_uniq - Generates no field handles for uniquely named fields in blocks. |
 | -gen_html | Generates the RAL model and its HTML UVM document. Its related files are dumped in the ral_top_path_name_doc directory. An error appears, if this option is specified without the -uvm option. |
 | -no_vif_self_inst | Omits the generation of the initial block inside the interface for self registering. This option can only be used with the -gen_vif_bkdr option. |
 | -top_macro <string_which_overrides_default_macro> | Allows you to use a different macro instead of name_TOP_PATH to specify the absolute path to the instance of the DUT that corresponds to the RAL model. |
